@@ -1,0 +1,11 @@
+services:
+  db-mysql:
+    image: mysql:8.3
+    container_name: qualieau-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: qualieau_db
+    ports:
+      - "3306:3306"
+	volumes:
+	  - ./sql:/docker-entrypoint-initdb.d
