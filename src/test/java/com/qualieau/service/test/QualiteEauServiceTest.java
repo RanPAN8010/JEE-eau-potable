@@ -19,9 +19,9 @@ class QualiteEauServiceTest {
 	@BeforeAll
 	public static void setUp() throws Exception {
         // 获取真实数据库连接，验证实际数据环境
-      connection = DBConnection.getConnection();
+        connection = DBConnection.getConnection();
         AnalyseDAO dao = new AnalyseDAO(connection);
-         waterService = new QualiteEauService(dao);
+        waterService = new QualiteEauService(dao);
     }
 
 	@Test

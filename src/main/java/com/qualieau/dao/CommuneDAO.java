@@ -15,19 +15,21 @@ public class CommuneDAO {
 	/**
      * Mettre en œuvre la logique de recherche principale
      */
-    public List<Commune> searchCommune(String keyword) throws SQLException {
+    public List<Commune> searchCommune(String query) throws SQLException {
         List<Commune> list = new ArrayList<>();
-        // Critères de recherche : Recherche par nom, code postal ou code INSEE
-        String sql = "SELECT * FROM Commune WHERE nom LIKE ? OR code_postal = ? OR code_insee = ? LIMIT 50";
+        // Critères de recherche : Recherche par nomou code INSEE
+        String sql = "SELECT code_insee, nom FROM Commune WHERE nom LIKE ? OR code_insee = ?";
         
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.setString(1, keyword + "%"); 
-            ps.setString(2, keyword);      
-            ps.setString(3, keyword);       
+        	ps.setString(1, "%" + query + "%"); // 模糊匹配名字
+            ps.setString(2, query);             // 精确匹配 INSEE 代码      
             
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                list.add(mapToCommune(rs));
+            	Commune c = new Commune();
+                c.setCodeInsee(rs.getString("code_insee"));
+                c.setNom(rs.getString("nom"));
+                list.add(c);
             }
         }
         return list;
