@@ -13,15 +13,15 @@ import org.junit.jupiter.api.Test;
 
 class QualiteEauServiceTest {
 	
-	private QualiteEauService waterService;
-    private Connection connection;
+	private static QualiteEauService waterService;
+    private static Connection connection;
 
 	@BeforeAll
-	void setUp() throws Exception {
+	public static void setUp() throws Exception {
         // 获取真实数据库连接，验证实际数据环境
-        this.connection = DBConnection.getConnection();
-        AnalyseDAO dao = new AnalyseDAO(this.connection);
-        this.waterService = new QualiteEauService(dao);
+      connection = DBConnection.getConnection();
+        AnalyseDAO dao = new AnalyseDAO(connection);
+         waterService = new QualiteEauService(dao);
     }
 
 	@Test
