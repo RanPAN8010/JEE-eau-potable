@@ -6,6 +6,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+
 import com.qualieau.dao.CommuneDAO;
 import com.qualieau.util.DBConnection;
 import com.qualieau.model.Commune;
@@ -32,7 +34,7 @@ public class CommuneServlet extends HttpServlet {
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// 设置返回格式为 JSON
-        response.setContentType("application/json");
+        response.setContentType("application/json;charset=UTF-8");
         response.setCharacterEncoding("UTF-8");
         String query = request.getParameter("query");
         if (query == null || query.trim().isEmpty()) {
@@ -41,14 +43,14 @@ public class CommuneServlet extends HttpServlet {
         }
         try (Connection conn = DBConnection.getConnection()) {
             CommuneDAO dao = new CommuneDAO(conn);            // 调用 DAO 进行搜索
-            List<Commune> resultats = dao.searchCommune(query);
+            List<Commune> resultats = dao.searchCommune(query.trim());
          // 手动构建符合 DSL 要求的 JSON 格式
             StringBuilder json = new StringBuilder("[");
             for (int i = 0; i < resultats.size(); i++) {
                 Commune c = resultats.get(i);
                 json.append("{")
-                    .append("\"nom\":\"").append(escapeJson(c.getNom())).append("\",")
-                    .append("\"codePostal\":\"").append(c.getCodePostal()).append("\",")
+                	// 在此处使用 fixEncoding 修复城市名
+                    .append("\"nom\":\"").append(escapeJson(fixEncoding(c.getNom()))).append("\",")
                     .append("\"codeInsee\":\"").append(c.getCodeInsee()).append("\"")
                     .append("}");
                 if (i < resultats.size() - 1) json.append(",");
@@ -72,6 +74,13 @@ public class CommuneServlet extends HttpServlet {
 	    return input.replace("\\", "\\\\")
 	                .replace("\"", "\\\"");
 	}
+	
+	private String fixEncoding(String input) {
+        if (input == null) return "";
+        // 将数据库读出的错误编码字节流重新映射回正确的法语字符
+        byte[] bytes = input.getBytes(StandardCharsets.ISO_8859_1);
+        return new String(bytes, StandardCharsets.UTF_8);
+    }
 
 	/**
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)

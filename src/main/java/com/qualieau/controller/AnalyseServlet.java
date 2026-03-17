@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import com.qualieau.dao.AnalyseDAO;
 import com.qualieau.util.DBConnection;
 import com.qualieau.model.Analyse;
@@ -31,7 +32,7 @@ public class AnalyseServlet extends HttpServlet {
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		response.setContentType("application/json");
+		response.setContentType("application/json;charset=UTF-8");
         response.setCharacterEncoding("UTF-8");
 
         String codeInsee = request.getParameter("codeInsee");
@@ -44,7 +45,6 @@ public class AnalyseServlet extends HttpServlet {
 
         try (Connection conn = DBConnection.getConnection()) {
             AnalyseDAO dao = new AnalyseDAO(conn);
-            // 注意：这里调用的是你在 DAO 里定义的方法名 getAnalyseByCommune
             List<Analyse> analyses = dao.getAnalyseByCommune(codeInsee);
 
             StringBuilder json = new StringBuilder("[");
@@ -52,9 +52,11 @@ public class AnalyseServlet extends HttpServlet {
                 Analyse a = analyses.get(i);
                 json.append("{")
                     .append("\"date\":\"").append(a.getDatePrelevement()).append("\",")
-                    .append("\"parametre\":\"").append(escapeJson(a.getParametre())).append("\",")
+                    // 修复检测参数名的乱码
+                    .append("\"parametre\":\"").append(escapeJson(fixEncoding(a.getParametre()))).append("\",")
                     .append("\"valeur\":").append(a.getValeur()).append(",")
-                    .append("\"unite\":\"").append(escapeJson(a.getUnite())).append("\",")
+                    // 修复单位的乱码
+                    .append("\"unite\":\"").append(escapeJson(fixEncoding(a.getUnite()))).append("\",")
                     .append("\"conforme\":").append(a.isConforme())
                     .append("}");
                 if (i < analyses.size() - 1) json.append(",");
@@ -74,6 +76,13 @@ public class AnalyseServlet extends HttpServlet {
 	private String escapeJson(String input) {
         if (input == null) return "";
         return input.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
+	
+	private String fixEncoding(String input) {
+        if (input == null) return "";
+        // 将数据库读出的错误编码字节流重新映射回正确的法语字符
+        byte[] bytes = input.getBytes(StandardCharsets.ISO_8859_1);
+        return new String(bytes, StandardCharsets.UTF_8);
     }
 
 	/**
