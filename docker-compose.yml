@@ -10,3 +10,13 @@ services:
     volumes:
       - C:/Users/43285092/mysql_data2:/var/lib/mysql
       - C:/Users/43285092/data/dis-2025:/var/lib/mysql-files
+
+  web-tomcat:
+    image: tomcat:11.0-jdk21
+    container_name: qualieau-tomcat
+    ports:
+      - "8081:8080"
+    volumes:
+      - C:/Users/43285092/deploy:/usr/local/tomcat/webapps
+    depends_on:
+      - db-mysql
