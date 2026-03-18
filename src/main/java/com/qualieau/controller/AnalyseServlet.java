@@ -15,6 +15,10 @@ import java.util.List;
 
 /**
  * Servlet implementation class AnalyseServlet
+ * Servlet gérant la récupération des analyses 
+ * de qualité d'eau pour une commune spécifique.
+ * @author Ran
+ * @version 1.1
  */
 @WebServlet("/api/analyses")
 public class AnalyseServlet extends HttpServlet {
@@ -52,10 +56,10 @@ public class AnalyseServlet extends HttpServlet {
                 Analyse a = analyses.get(i);
                 json.append("{")
                     .append("\"date\":\"").append(a.getDatePrelevement()).append("\",")
-                    // 修复检测参数名的乱码
+                    // 修复检测参数名的乱码 Correction de l'encodage pour le nom du paramètre
                     .append("\"parametre\":\"").append(escapeJson(fixEncoding(a.getParametre()))).append("\",")
                     .append("\"valeur\":").append(a.getValeur()).append(",")
-                    // 修复单位的乱码
+                    // 修复单位的乱码 Correction de l'encodage pour l'unité de mesure
                     .append("\"unite\":\"").append(escapeJson(fixEncoding(a.getUnite()))).append("\",")
                     .append("\"conforme\":").append(a.isConforme())
                     .append("}");
@@ -72,6 +76,8 @@ public class AnalyseServlet extends HttpServlet {
 	
 	/**
 	 * 基础转义逻辑：防止城市名中的双引号或反斜杠破坏手动拼接的 JSON 结构。
+	 * Logique d'échappement de base : empêche les guillemets 
+	 * ou les barres obliques de corrompre la structure JSON.
 	 */
 	private String escapeJson(String input) {
         if (input == null) return "";
@@ -81,6 +87,7 @@ public class AnalyseServlet extends HttpServlet {
 	private String fixEncoding(String input) {
         if (input == null) return "";
         // 将数据库读出的错误编码字节流重新映射回正确的法语字符
+        // vRemappage du flux d'octets erroné issu de la base de données vers les caractères français corrects.
         byte[] bytes = input.getBytes(StandardCharsets.ISO_8859_1);
         return new String(bytes, StandardCharsets.UTF_8);
     }

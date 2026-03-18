@@ -43,7 +43,4 @@ public class Commune {
 	public void setCodeInsee(String codeInsee) {
 		this.codeInsee = codeInsee;
 	}     
-    
-    
-
 }

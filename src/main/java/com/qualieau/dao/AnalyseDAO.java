@@ -4,21 +4,34 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import com.qualieau.model.Analyse;
-
+/**
+ * Classe DAO pour la gestion des analyses de l'eau.
+ * Elle permet d'interagir avec la table "Analyse" dans la base de données.
+ * * @author Ran
+ * @version 1.0
+ */
 public class AnalyseDAO {
+	/** La connexion active à la base de données. */
 	private Connection connection;
-	
+
+	/**
+     * Initialise le DAO avec une connexion SQL.
+     * * @param connection L'objet {@link Connection} à utiliser pour les opérations.
+     */	
 	public AnalyseDAO(Connection connection) {
         this.connection = connection;
     }
 
 	/**
-     * Récupérer tous les enregistrements historiques pour une ville donnée
+     * Récupère tous les enregistrements historiques pour une ville donnée via son code INSEE.
+     * Les résultats sont classés par date de prélèvement de la plus récente à la plus ancienne.
+     *
+     * @param codeInsee Le code INSEE identifiant la commune.
+     * @return Une {@link List} d'objets {@link Analyse} correspondant aux critères.
+     * @throws SQLException Si une erreur de communication avec la base de données survient.
      */
     public List<Analyse> getAnalyseByCommune(String codeInsee) throws SQLException {
         List<Analyse> list = new ArrayList<>();
-        // La requête SQL doit ici utiliser l'index idx_insee_analyse
-        // Le temps de réponse doit être inférieur à 2 secondes
         String sql = "SELECT * FROM Analyse WHERE code_insee = ? ORDER BY date_prelevement DESC";
         //Toutes les requêtes utilisent PreparedStatement afin d'empêcher les injections SQL
         try (PreparedStatement ps = connection.prepareStatement(sql)) {

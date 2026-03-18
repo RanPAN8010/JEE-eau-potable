@@ -1,13 +1,37 @@
 package com.qualieau.model;
 import java.time.LocalDate;
+/**
+ * Représente une analyse de la qualité de l'eau.
+ * Cette classe contient les résultats des prélèvements et les indicateurs de conformité.
+ * * @author Ran
+ * @version 1.0
+ */
 public class Analyse {
-	private Long id;                 
-    private LocalDate datePrelevement; 
-    private String parametre;         
-    private Double valeur;           
-    private String unite;            
-    private boolean conforme;         
+	
+	/** Identifiant unique en base de données. */
+	private Long id; 
+	
+	/** Date du prélèvement de l'échantillon. */
+    private LocalDate datePrelevement;
+    
+    /** Libellé du paramètre analysé (ex: Chlore, Plomb). */
+    private String parametre; 
+    
+    /** Résultat chiffré de l'analyse. */
+    private Double valeur;  
+    
+    /** Unité associée à la valeur (ex: µg/L). */
+    private String unite;      
+    
+    /** État de conformité de l'échantillon par rapport aux seuils réglementaires. */
+    private boolean conforme;
+    
+    /** Code INSEE de la commune où le prélèvement a été réalisé. */
     private String codeInsee;
+    
+    /**
+     * getters et setters
+     */
 	public Long getId() {
 		return id;
 	}
