@@ -10,6 +10,8 @@ import java.nio.charset.StandardCharsets;
 import com.qualieau.dao.AnalyseDAO;
 import com.qualieau.util.DBConnection;
 import com.qualieau.model.Analyse;
+import com.qualieau.service.QualiteEauService;
+
 import java.sql.Connection;
 import java.util.List;
 
@@ -49,23 +51,33 @@ public class AnalyseServlet extends HttpServlet {
 
         try (Connection conn = DBConnection.getConnection()) {
             AnalyseDAO dao = new AnalyseDAO(conn);
+            QualiteEauService service = new QualiteEauService(dao);
             List<Analyse> analyses = dao.getAnalyseByCommune(codeInsee);
-
-            StringBuilder json = new StringBuilder("[");
+            double taux = service.calculerTauxConformite(codeInsee); 
+            int totalAlertes = service.recupererAlertes(codeInsee).size(); 
+            StringBuilder json = new StringBuilder("{");
+            
+            // 添加汇总统计数据
+            json.append("\"summary\": {")
+                .append("\"tauxConformite\":").append(taux).append(",")
+                .append("\"totalAnalyses\":").append(analyses.size()).append(",")
+                .append("\"totalAlertes\":").append(totalAlertes)
+                .append("},");
+            
+            // 添加详细列表数据
+            json.append("\"results\": [");
             for (int i = 0; i < analyses.size(); i++) {
                 Analyse a = analyses.get(i);
                 json.append("{")
                     .append("\"date\":\"").append(a.getDatePrelevement()).append("\",")
-                    // 修复检测参数名的乱码 Correction de l'encodage pour le nom du paramètre
-                    .append("\"parametre\":\"").append(escapeJson(fixEncoding(a.getParametre()))).append("\",")
-                    .append("\"valeur\":").append(a.getValeur()).append(",")
-                    // 修复单位的乱码 Correction de l'encodage pour l'unité de mesure
-                    .append("\"unite\":\"").append(escapeJson(fixEncoding(a.getUnite()))).append("\",")
-                    .append("\"conforme\":").append(a.isConforme())
+                    .append("\"parametre\":\"").append(escapeJson(a.getParametre())).append("\",")
+                    .append("\"valeur\":\"").append(escapeJson(a.getValeur())).append(",")
+                    .append("\"unite\":\"").append(escapeJson(a.getUnite())).append("\",")
+                    .append("\"conforme\":\"").append(a.getConforme())
                     .append("}");
                 if (i < analyses.size() - 1) json.append(",");
             }
-            json.append("]");
+            json.append("]}");
             
             response.getWriter().write(json.toString());
         } catch (Exception e) {
@@ -83,15 +95,6 @@ public class AnalyseServlet extends HttpServlet {
         if (input == null) return "";
         return input.replace("\\", "\\\\").replace("\"", "\\\"");
     }
-	
-	private String fixEncoding(String input) {
-        if (input == null) return "";
-        // 将数据库读出的错误编码字节流重新映射回正确的法语字符
-        // vRemappage du flux d'octets erroné issu de la base de données vers les caractères français corrects.
-        byte[] bytes = input.getBytes(StandardCharsets.ISO_8859_1);
-        return new String(bytes, StandardCharsets.UTF_8);
-    }
-
 	/**
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */

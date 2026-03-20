@@ -18,13 +18,13 @@ public class Analyse {
     private String parametre; 
     
     /** Résultat chiffré de l'analyse. */
-    private Double valeur;  
+    private String valeur;  
     
     /** Unité associée à la valeur (ex: µg/L). */
     private String unite;      
     
     /** État de conformité de l'échantillon par rapport aux seuils réglementaires. */
-    private boolean conforme;
+    private String conforme;
     
     /** Code INSEE de la commune où le prélèvement a été réalisé. */
     private String codeInsee;
@@ -50,10 +50,10 @@ public class Analyse {
 	public void setParametre(String parametre) {
 		this.parametre = parametre;
 	}
-	public Double getValeur() {
+	public String getValeur() {
 		return valeur;
 	}
-	public void setValeur(Double valeur) {
+	public void setValeur(String valeur) {
 		this.valeur = valeur;
 	}
 	public String getUnite() {
@@ -62,10 +62,10 @@ public class Analyse {
 	public void setUnite(String unite) {
 		this.unite = unite;
 	}
-	public boolean isConforme() {
+	public String getConforme() {
 		return conforme;
 	}
-	public void setConforme(boolean conforme) {
+	public void setConforme(String conforme) {
 		this.conforme = conforme;
 	}
 	public String getCodeInsee() {
@@ -74,6 +74,4 @@ public class Analyse {
 	public void setCodeInsee(String codeInsee) {
 		this.codeInsee = codeInsee;
 	}       
-
-
 }

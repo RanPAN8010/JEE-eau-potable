@@ -4,6 +4,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import com.qualieau.model.Analyse;
+import com.qualieau.util.DBConnection;
 /**
  * Classe DAO pour la gestion des analyses de l'eau.
  * Elle permet d'interagir avec la table "Analyse" dans la base de données.
@@ -32,19 +33,21 @@ public class AnalyseDAO {
      */
     public List<Analyse> getAnalyseByCommune(String codeInsee) throws SQLException {
         List<Analyse> list = new ArrayList<>();
-        String sql = "SELECT * FROM Analyse WHERE code_insee = ? ORDER BY date_prelevement DESC";
+        String sql = "SELECT date_prelevement, parametre, valeur, unite, conforme " +
+                "FROM analyse WHERE code_insee = ? ORDER BY date_prelevement DESC";
         //Toutes les requêtes utilisent PreparedStatement afin d'empêcher les injections SQL
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, codeInsee);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                Analyse a = new Analyse();
-                a.setDatePrelevement(rs.getDate("date_prelevement").toLocalDate()); // [cite: 50, 160]
-                a.setParametre(rs.getString("parametre"));
-                a.setValeur(rs.getDouble("valeur"));     
-                a.setUnite(rs.getString("unite"));    
-                a.setConforme(rs.getBoolean("conforme")); 
-                list.add(a);
+            try (ResultSet rs = ps.executeQuery()) {
+	            while (rs.next()) {
+	                Analyse a = new Analyse();
+	                a.setDatePrelevement(rs.getDate("date_prelevement").toLocalDate()); // [cite: 50, 160]
+	                a.setParametre(rs.getString("parametre"));
+	                a.setValeur(rs.getString("valeur"));     
+	                a.setUnite(rs.getString("unite"));    
+	                a.setConforme(rs.getString("conforme")); 
+	                list.add(a);
+	            }
             }
         }
         return list;

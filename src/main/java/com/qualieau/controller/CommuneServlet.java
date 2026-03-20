@@ -48,24 +48,36 @@ public class CommuneServlet extends HttpServlet {
         response.setContentType("application/json;charset=UTF-8");
         response.setCharacterEncoding("UTF-8");
         String query = request.getParameter("query");
-        if (query == null || query.trim().isEmpty()) {
-            response.getWriter().write("[]");
-            return;
-        }
+        String dept = request.getParameter("departement");
+        String reg = request.getParameter("region");
+        
         try (Connection conn = DBConnection.getConnection()) {
             CommuneDAO dao = new CommuneDAO(conn);// 调用 DAO 进行搜索
             List<Commune> resultats = dao.searchCommune(query.trim());
-         // 手动构建符合 DSL 要求的 JSON 格式
+            
+            // 逻辑判断：是主搜索还是区域筛选
+            if (query != null && !query.trim().isEmpty()) {
+                resultats = dao.searchCommune(query.trim());
+            } else if ((dept != null && !dept.isEmpty()) || (reg != null && !reg.isEmpty())) {
+                resultats = dao.findByZone(dept, reg);
+            } else {
+                response.getWriter().write("[]");
+                return;
+            }
+            // 手动构建符合 DSL 要求的 JSON 格式
             //Construire manuellement le format JSON conforme.
             StringBuilder json = new StringBuilder("[");
             for (int i = 0; i < resultats.size(); i++) {
                 Commune c = resultats.get(i);
                 json.append("{")
-                	// 在此处使用 fixEncoding 修复城市名
-                	// j'y utilise fixEncoding pour corriger le nom de la commune.
-                    .append("\"nom\":\"").append(escapeJson(fixEncoding(c.getNom()))).append("\",")
-                    .append("\"codeInsee\":\"").append(c.getCodeInsee()).append("\"")
-                    .append("}");
+	                .append("\"nom\":\"").append(escapeJson(c.getNom())).append("\",")
+	                .append("\"codeInsee\":\"").append(c.getCodeInsee()).append("\",")
+	                .append("\"codePostal\":\"").append(c.getCodePostal()).append("\",")
+	                .append("\"departement\":\"").append(escapeJson(c.getDepartement())).append("\",")
+	                .append("\"region\":\"").append(escapeJson(c.getRegion())).append("\",")
+	                .append("\"latitude\":").append(c.getLatitude()).append(",")
+	                .append("\"longitude\":").append(c.getLongitude())
+	                .append("}");
                 if (i < resultats.size() - 1) json.append(",");
             }
             json.append("]");
@@ -95,22 +107,6 @@ public class CommuneServlet extends HttpServlet {
 	                .replace("\"", "\\\"");
 	}
 	
-	/**
-     * Corrige l'encodage des caractères français.
-     * Remapper le flux d'octets ISO_8859_1 vers UTF_8 pour afficher correctement les accents.
-     *
-     * @param input La chaîne brute lue depuis la base de données.
-     * @return La chaîne convertie en UTF-8.
-     */
-	private String fixEncoding(String input) {
-        if (input == null) return "";
-        // 将数据库读出的错误编码字节流重新映射回正确的法语字符
-        // Remapper le flux d'octets mal encodés de la base de données
-        // vers les caractères français corrects.
-        byte[] bytes = input.getBytes(StandardCharsets.ISO_8859_1);
-        return new String(bytes, StandardCharsets.UTF_8);
-    }
-
 	/**
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */

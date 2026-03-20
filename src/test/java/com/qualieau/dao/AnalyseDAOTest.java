@@ -2,23 +2,30 @@ package com.qualieau.dao;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import com.qualieau.util.DBConnection;
-import com.qualieau.model.Analyse;
 import java.sql.Connection;
 import java.util.List;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
+import com.qualieau.model.Analyse;
+import com.qualieau.util.DBConnection;
 
 class AnalyseDAOTest {
 
 	@BeforeAll
 	static void setUpBeforeClass() throws Exception {
 	}
-	@Test
-    void testGetAnalyseByCommune() {
-        // 使用一个确定存在数据的 INSEE 代码
-        String testInsee = "01007"; 
 
+	/**
+     * 测试用例：验证根据 INSEE 码获取分析列表。
+     * 对应 PVL 案例 7 。
+     */
+    @Test
+    public void testGetAnalyseByCommune() {
+
+    	String testInsee = "01007"; 
+        
         assertDoesNotThrow(() -> {
             try (Connection conn = DBConnection.getConnection()) {
                 AnalyseDAO dao = new AnalyseDAO(conn);
@@ -36,10 +43,17 @@ class AnalyseDAOTest {
                 
                 if (!results.isEmpty()) {
                     Analyse first = results.get(0);
-                    // 3. 验证字段映射
-                    assertNotNull(first.getDatePrelevement());
-                    assertNotNull(first.getParametre());
-                    
+                    // 3. 验证关键字段映射 (PVL 7: date, paramètre, valeur, unité, conformité) 
+                    assertNotNull(first.getDatePrelevement(), "Date de prélèvement manquante");
+                    assertNotNull(first.getParametre(), "Libellé du paramètre manquant");
+                    assertNotNull(first.getValeur(), "Valeur de mesure manquante");
+                    assertNotNull(first.getConforme(), "Indicateur de conformité manquant");
+                    // 4. 验证排序逻辑：最新日期在前
+                    if (results.size() > 1) {
+                        Analyse second = results.get(1);
+                        assertFalse(first.getDatePrelevement().isBefore(second.getDatePrelevement()), 
+                            "Le tri par date (récent -> ancien) est incorrect");
+                    }
                     System.out.println("Test réussi pour " + testInsee + " : " + results.size() + " analyses trouvées en " + duration + "ms");
                 } else {
                     System.out.println("Attention : Aucune donnée trouvée pour " + testInsee + " mais la requête a fonctionné.");
@@ -47,4 +61,25 @@ class AnalyseDAOTest {
             }
         });
     }
+    
+    /**
+     * 测试：确保测量值包含特殊字符时不崩溃
+     */
+    @Test
+    void testSpecialCharacterHandling() {
+        assertDoesNotThrow(() -> {
+            try (Connection conn = DBConnection.getConnection()) {
+                AnalyseDAO dao = new AnalyseDAO(conn);
+                // 查找所有记录，检查是否存在带 < 或 > 的测量值
+                List<Analyse> results = dao.getAnalyseByCommune("76540");
+                boolean foundSpecial = results.stream()
+                    .anyMatch(a -> a.getValeur().contains("<") || a.getValeur().contains(">"));
+                
+                if(foundSpecial) {
+                    System.out.println("INFO: Valeurs spéciales (<, >) correctement gérées");
+                }
+            }
+        });
+    }
+
 }
