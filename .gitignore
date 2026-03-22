@@ -1,1 +1,7 @@
-/target/
+target/
+*.war
+*.class
+*.sql
+*.txt
+*.csv
+mysql_data/

@@ -11,10 +11,18 @@ import java.util.List;
 
 class AnalyseDAOTest {
 
+<<<<<<< Updated upstream
 	@BeforeAll
 	static void setUpBeforeClass() throws Exception {
 	}
 	@Test
+=======
+    @BeforeAll
+    static void setUpBeforeClass() throws Exception {
+    }
+    
+    @Test
+>>>>>>> Stashed changes
     void testGetAnalyseByCommune() {
         // 使用一个确定存在数据的 INSEE 代码
         String testInsee = "01007"; 
@@ -25,7 +33,15 @@ class AnalyseDAOTest {
                 
                 // 记录开始时间，验证性能
                 long startTime = System.currentTimeMillis();
+<<<<<<< Updated upstream
                 List<Analyse> results = dao.getAnalyseByCommune(testInsee);
+=======
+                
+                // --- 🟢 MODIFICATION ICI : Appel de la nouvelle méthode ---
+                List<Analyse> results = dao.searchAnalyses("insee", testInsee);
+                // ---------------------------------------------------------
+                
+>>>>>>> Stashed changes
                 long duration = System.currentTimeMillis() - startTime;
 
                 // 1. 验证结果不为空
@@ -47,4 +63,8 @@ class AnalyseDAOTest {
             }
         });
     }
+<<<<<<< Updated upstream
 }
+=======
+}
+>>>>>>> Stashed changes

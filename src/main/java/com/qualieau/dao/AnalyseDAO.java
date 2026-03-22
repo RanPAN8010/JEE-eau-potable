@@ -3,6 +3,7 @@ package com.qualieau.dao;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+<<<<<<< Updated upstream
 import com.qualieau.model.Analyse;
 /**
  * Classe DAO pour la gestion des analyses de l'eau.
@@ -45,8 +46,79 @@ public class AnalyseDAO {
                 a.setUnite(rs.getString("unite"));    
                 a.setConforme(rs.getBoolean("conforme")); 
                 list.add(a);
+=======
+import java.nio.charset.StandardCharsets; 
+import com.qualieau.model.Analyse;
+
+public class AnalyseDAO {
+    private Connection connection;
+
+    public AnalyseDAO(Connection connection) {
+        this.connection = connection;
+    }
+
+    public List<Analyse> searchAnalyses(String type, String param) throws SQLException {
+        List<Analyse> list = new ArrayList<>();
+        String sql;
+        
+        if ("departement".equals(type)) {
+            sql = "SELECT * FROM analyse WHERE code_insee LIKE ? ORDER BY date_prelevement DESC LIMIT 1000";
+        } else {
+            sql = "SELECT * FROM analyse WHERE code_insee = ? ORDER BY date_prelevement DESC LIMIT 1000";
+        }
+        
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            if ("departement".equals(type)) {
+                ps.setString(1, param + "%"); 
+            } else {
+                ps.setString(1, param);
+            }
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Analyse a = new Analyse();
+                    
+                    Date date = rs.getDate("date_prelevement");
+                    if (date != null) a.setDatePrelevement(date.toLocalDate());
+                    
+                    // --- LE DÉCODEUR MAGIQUE (RÉPARATION À LA VOLÉE) ---
+                    String parametreStr = rs.getString("parametre");
+                    if (parametreStr != null) {
+                        // Si on voit un caractère cassé "Ã", on traduit ISO -> UTF-8
+                        if (parametreStr.contains("Ã")) {
+                            parametreStr = new String(parametreStr.getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
+                        }
+                        a.setParametre(parametreStr);
+                    }
+                    
+                    String uniteStr = rs.getString("unite");
+                    if (uniteStr != null) {
+                        if (uniteStr.contains("Ã")) {
+                            uniteStr = new String(uniteStr.getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
+                        }
+                        a.setUnite(uniteStr);
+                    }
+                    // --------------------------------------------------
+                    
+                    String valStr = rs.getString("valeur");
+                    try { 
+                        if (valStr != null) a.setValeur(Double.parseDouble(valStr.replace(",", "."))); 
+                    } catch (Exception e) { 
+                        a.setValeur(0.0); 
+                    }
+                    
+                    String conformeStr = rs.getString("conforme");
+                    a.setConforme(conformeStr != null && conformeStr.trim().equalsIgnoreCase("C"));
+                    
+                    list.add(a);
+                }
+>>>>>>> Stashed changes
             }
         }
         return list;
     }
+<<<<<<< Updated upstream
 }
+=======
+}
+>>>>>>> Stashed changes

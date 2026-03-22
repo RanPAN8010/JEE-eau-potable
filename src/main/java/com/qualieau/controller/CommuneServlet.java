@@ -14,6 +14,7 @@ import com.qualieau.model.Commune;
 import java.sql.Connection;
 import java.util.List;
 
+<<<<<<< Updated upstream
 /**
  * Servlet pour la gestion des requêtes liées aux communes.
  * Cette classe permet de rechercher des communes via une API REST.
@@ -47,28 +48,71 @@ public class CommuneServlet extends HttpServlet {
 		// Définir le format de réponse en tant que JSON.
         response.setContentType("application/json;charset=UTF-8");
         response.setCharacterEncoding("UTF-8");
+=======
+@WebServlet("/api/communes")
+public class CommuneServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
+       
+    public CommuneServlet() {
+        super();
+    }
+
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // 🚨 CORRECTION : Les autorisations CORS pour React !
+        response.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
+        response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        
+        response.setContentType("application/json;charset=UTF-8");
+        response.setCharacterEncoding("UTF-8");
+        
+>>>>>>> Stashed changes
         String query = request.getParameter("query");
         if (query == null || query.trim().isEmpty()) {
             response.getWriter().write("[]");
             return;
         }
+<<<<<<< Updated upstream
         try (Connection conn = DBConnection.getConnection()) {
             CommuneDAO dao = new CommuneDAO(conn);// 调用 DAO 进行搜索
             List<Commune> resultats = dao.searchCommune(query.trim());
          // 手动构建符合 DSL 要求的 JSON 格式
             //Construire manuellement le format JSON conforme.
+=======
+
+        // 🛡️ CORRECTION : On autorise l'apostrophe (ex: L'Aigle)
+        if (query.matches(".*[^a-zA-ZÀ-ÿ0-9\\s\\-'].*")) {
+            response.setStatus(404);
+            response.getWriter().write("{\"error\": \"Ville non trouvée\"}");
+            return;
+        }
+
+        try (Connection conn = DBConnection.getConnection()) {
+            CommuneDAO dao = new CommuneDAO(conn);
+            List<Commune> resultats = dao.searchCommune(query.trim());
+            
+            if (resultats.isEmpty()) {
+                response.setStatus(404);
+                response.getWriter().write("{\"error\": \"Ville non trouvée\"}");
+                return;
+            }
+
+>>>>>>> Stashed changes
             StringBuilder json = new StringBuilder("[");
             for (int i = 0; i < resultats.size(); i++) {
                 Commune c = resultats.get(i);
                 json.append("{")
+<<<<<<< Updated upstream
                 	// 在此处使用 fixEncoding 修复城市名
                 	// j'y utilise fixEncoding pour corriger le nom de la commune.
+=======
+>>>>>>> Stashed changes
                     .append("\"nom\":\"").append(escapeJson(fixEncoding(c.getNom()))).append("\",")
                     .append("\"codeInsee\":\"").append(c.getCodeInsee()).append("\"")
                     .append("}");
                 if (i < resultats.size() - 1) json.append(",");
             }
             json.append("]");
+<<<<<<< Updated upstream
             response.getWriter().write(json.toString());
         } catch (Exception e) {
             // PVL 案例 12：错误处理
@@ -107,10 +151,29 @@ public class CommuneServlet extends HttpServlet {
         // 将数据库读出的错误编码字节流重新映射回正确的法语字符
         // Remapper le flux d'octets mal encodés de la base de données
         // vers les caractères français corrects.
+=======
+            
+            response.getWriter().write(json.toString());
+            
+        } catch (Exception e) {
+            response.setStatus(500);
+            response.getWriter().write("{\"error\": \"Service indisponible\"}");
+        }
+    }
+    
+    private String escapeJson(String input) {
+        if (input == null) return "";
+        return input.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
+    
+    private String fixEncoding(String input) {
+        if (input == null) return "";
+>>>>>>> Stashed changes
         byte[] bytes = input.getBytes(StandardCharsets.ISO_8859_1);
         return new String(bytes, StandardCharsets.UTF_8);
     }
 
+<<<<<<< Updated upstream
 	/**
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */
@@ -120,3 +183,9 @@ public class CommuneServlet extends HttpServlet {
 	}
 
 }
+=======
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        doGet(request, response);
+    }
+}
+>>>>>>> Stashed changes

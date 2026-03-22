@@ -2,14 +2,26 @@ services:
   db-mysql:
     image: mysql:8.0
     container_name: qualieau-mysql
+<<<<<<< Updated upstream
+=======
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+>>>>>>> Stashed changes
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: qualieau_db
     ports:
+<<<<<<< Updated upstream
       - "3306:3306"
     volumes:
       - C:/Users/43285092/mysql_data2:/var/lib/mysql
       - C:/Users/43285092/data/dis-2025:/var/lib/mysql-files
+=======
+      - "3307:3306"
+    volumes:
+      # Chemins relatifs corrigés pour fonctionner sur n'importe quel PC
+      - ./mysql_data:/var/lib/mysql
+      - ./mysql_files:/var/lib/mysql-files
+>>>>>>> Stashed changes
 
   web-tomcat:
     image: tomcat:11.0-jdk21
@@ -17,6 +29,11 @@ services:
     ports:
       - "8081:8080"
     volumes:
+<<<<<<< Updated upstream
       - C:/Users/43285092/deploy:/usr/local/tomcat/webapps
+=======
+      # On pointe bien vers le dossier "target" où Maven crée le fichier .war
+      - ./target:/usr/local/tomcat/webapps
+>>>>>>> Stashed changes
     depends_on:
       - db-mysql
