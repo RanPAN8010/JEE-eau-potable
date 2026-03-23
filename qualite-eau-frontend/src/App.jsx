@@ -28,7 +28,7 @@ export default function App() {
 
   // 1. Chargement des bases
   useEffect(() => {
-    fetch(`http://localhost:8081/QualiEau/api/analyses?type=list_villes`)
+    fetch(`http://localhost:8080/QualiEau/api/analyses?type=list_villes`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) setAvailableInsee(data);
@@ -106,7 +106,7 @@ export default function App() {
         }
       }
 
-      fetch(`http://localhost:8081/QualiEau/api/analyses?type=${searchType}&valeur=${searchQuery}`) 
+      fetch(`http://localhost:8080/QualiEau/api/analyses?type=${searchType}&valeur=${searchQuery}`) 
         .then(res => res.json())
         .then(data => {
           if(!Array.isArray(data)) { setRealData([]); return; }

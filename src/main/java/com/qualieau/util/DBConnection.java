@@ -9,7 +9,8 @@ public class DBConnection {
     private static final String DOCKER_URL = "jdbc:mysql://db-mysql:3306/qualieau_db?serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8";
     
     // 2. URL pour tes tests locaux sur ton PC (port 3307 du docker-compose + UTF-8)
-    private static final String LOCAL_URL = "jdbc:mysql://localhost:3307/qualieau_db?serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8";
+    // Remplace 3307 par 3306
+private static final String LOCAL_URL = "jdbc:mysql://localhost:3307/qualieau_db?serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8";
 
     private static final String USER = "root"; 
     private static final String PASSWORD = "root"; 
