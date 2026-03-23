@@ -26,7 +26,7 @@ export default function App() {
 
   const todayFormatted = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 
-  // 1. Chargement des bases (Ton backend + Noms des départements du gouv)
+  // 1. Chargement des bases
   useEffect(() => {
     fetch(`http://localhost:8081/QualiEau/api/analyses?type=list_villes`)
       .then(res => res.json())
@@ -54,7 +54,7 @@ export default function App() {
     return Array.from(depts).sort();
   }, [availableInsee]);
 
-  // 2. Chargement des villes du gouvernement selon le département
+  // 2. Chargement des villes
   useEffect(() => {
     if (selectedDept !== 'all') {
       setIsLoadingCities(true);
@@ -84,12 +84,18 @@ export default function App() {
   // 3. Charger les analyses
   useEffect(() => {
     if (!searchQuery) return;
+    
+    // 🛡️ CORRECTION TEST 4 : Si le type est "error", on ne contacte même pas le Java, on vide la liste
+    if (searchType === 'error') {
+      setRealData([]);
+      return;
+    }
+
     const fetchData = async () => {
-      // Gestion du nom pour le titre H1
       if (searchType === 'departement') {
         const nomDept = nomsDepartements[searchQuery] || searchQuery;
         setCityName(`Département (${nomDept})`);
-      } else if (!cityName || cityName === '') { // 🟢 Évite de re-télécharger le nom si on le connaît déjà
+      } else if (!cityName || cityName === '') { 
         try {
           const res = await fetch(`https://geo.api.gouv.fr/communes/${searchQuery}?fields=nom`);
           const data = await res.json();
@@ -100,7 +106,6 @@ export default function App() {
         }
       }
 
-      // Appel au Backend Java
       fetch(`http://localhost:8081/QualiEau/api/analyses?type=${searchType}&valeur=${searchQuery}`) 
         .then(res => res.json())
         .then(data => {
@@ -123,15 +128,18 @@ export default function App() {
         .catch(() => setRealData([]));
     };
     fetchData();
-  }, [searchQuery, searchType, nomsDepartements]); // cityName retiré des dépendances pour éviter les boucles
+  }, [searchQuery, searchType, nomsDepartements]); 
 
   // --- FILTRES ---
   const filteredData = useMemo(() => {
     let data = [...realData];
+    // 📅 CORRECTION DATES : Ajout de 12 mois
     if (periodFilter !== 'all' && data.length > 0) {
         const latest = new Date(data[0].date);
-        const days = periodFilter === '3m' ? 90 : periodFilter === '6m' ? 180 : 365;
-        data = data.filter(d => (latest - new Date(d.date)) / (1000*3600*24) <= days);
+        const days = periodFilter === '3m' ? 90 : periodFilter === '6m' ? 180 : periodFilter === '12m' ? 365 : 0;
+        if (days > 0) {
+           data = data.filter(d => (latest - new Date(d.date)) / (1000*3600*24) <= days);
+        }
     }
     if (filter !== 'all') data = data.filter(d => filter === 'ok' ? d.ok : !d.ok);
     if (paramFilter !== 'all') data = data.filter(d => d.param === paramFilter);
@@ -147,7 +155,6 @@ export default function App() {
       return { total, conforme, alerte, taux: total > 0 ? ((conforme / total) * 100).toFixed(1) : "0.0" }
   }, [filteredData]);
 
-  // --- VILLES DYNAMIQUES (Croisement BDD & Gouvernement) ---
   const dropdownCities = useMemo(() => {
     const list = Array.isArray(availableInsee) ? availableInsee : [];
     if (selectedDept === 'all') return [];
@@ -174,6 +181,17 @@ export default function App() {
 
   const handleSearch = async () => {
     if (inputValue && inputValue.trim() !== '') { 
+      
+      // 🛡️ CORRECTION TEST 4 : Détection caractères spéciaux immédiate
+      const hasSpecialChars = /[^a-zA-ZÀ-ÿ0-9\s\-]/.test(inputValue);
+      if (hasSpecialChars) {
+          setSearchType('error');
+          setSearchQuery('error');
+          setCityName('Ville non trouvée');
+          setView('results');
+          return; // On arrête tout ici, l'écran affichera le message d'erreur.
+      }
+
       if (isNaN(inputValue)) { 
         try {
           const res = await fetch(`https://geo.api.gouv.fr/communes?nom=${inputValue}&boost=population&limit=1`);
@@ -183,12 +201,18 @@ export default function App() {
             setSearchType('insee');
             setCityName(data[0].nom); 
             setView('results');
-          } else { alert("Ville introuvable."); }
+          } else { 
+            // Si l'API gouv ne trouve pas (ex: ville imaginaire)
+            setSearchType('error');
+            setSearchQuery('error');
+            setCityName('Ville non trouvée');
+            setView('results');
+          }
         } catch { alert("Erreur réseau géographique."); }
       } else {
         setSearchQuery(inputValue);
         setSearchType('insee');
-        setCityName(''); // Réinitialiser le nom pour forcer l'API à chercher
+        setCityName(''); 
         setView('results');
       }
       return;
@@ -326,7 +350,6 @@ export default function App() {
             <div className="space-y-4">
               <h3 className="text-[10px] uppercase tracking-widest font-bold text-[#0D9488]">02 — Exploration</h3>
               <ul className="space-y-4 font-serif text-xl italic text-[#94A3B8]">
-                {/* 🟢 NOUVEAU : On injecte instantanément les noms des villes au clic ! */}
                 <li onClick={()=>{setSearchQuery('75056'); setSearchType('insee'); setCityName('Paris'); setView('results');}} className="hover:text-[#0D9488] cursor-pointer transition-colors">Qualité de l'eau à Paris →</li>
                 <li onClick={()=>{setSearchQuery('69123'); setSearchType('insee'); setCityName('Lyon'); setView('results');}} className="hover:text-[#0D9488] cursor-pointer transition-colors">Qualité de l'eau à Lyon →</li>
                 <li onClick={()=>{setSearchQuery('76540'); setSearchType('insee'); setCityName('Rouen'); setView('results');}} className="hover:text-[#0D9488] cursor-pointer transition-colors">Qualité de l'eau à Rouen →</li>
@@ -348,7 +371,7 @@ export default function App() {
             
             <div className="mb-16 pb-4 border-b border-[#E2E8F0] flex flex-col md:flex-row justify-between items-center gap-6">
               <div className="flex items-center gap-4 text-[10px] uppercase tracking-[0.2em] font-bold text-[#64748B]">
-                <div className="flex items-center gap-2"><MapPin size={14}/> {searchType === 'departement' ? searchQuery.substring(0,2) : searchQuery}</div>
+                <div className="flex items-center gap-2"><MapPin size={14}/> {searchType === 'departement' ? searchQuery.substring(0,2) : (searchType === 'error' ? 'ERREUR' : searchQuery)}</div>
                 <span className="text-[#CBD5E1]">|</span> 
                 <div className="flex items-center gap-2">
                   <Calendar size={14}/>
@@ -356,6 +379,7 @@ export default function App() {
                     <option value="all">Historique complet</option>
                     <option value="3m">3 derniers mois</option>
                     <option value="6m">6 derniers mois</option>
+                    <option value="12m">12 derniers mois</option>
                   </select>
                 </div>
               </div>
@@ -371,12 +395,14 @@ export default function App() {
                 <button onClick={() => setView('home')} className="text-[9px] uppercase tracking-[0.2em] font-bold text-[#94A3B8] mb-8 hover:text-[#0F172A] transition-colors">— NOUVELLE RECHERCHE</button>
                 <h2 className="font-serif text-6xl md:text-8xl mb-4 italic text-[#0F172A] leading-none">{cityName}.</h2>
                 <p className="text-[#64748B] font-light text-2xl leading-relaxed">
-                  {/* 🟢 NOUVEAU : Ajout du mot "communal" manquant */}
-                  Réseau de distribution {searchType === 'departement' ? 'départemental' : 'communal'}.<br />
-                  {stats.alerte === 0 ? (
-                    <span className="text-[#0D9488] font-bold underline decoration-[1.5px] underline-offset-4 italic">Conformité validée</span>
-                  ) : (
-                    <><span className="text-[#E11D48] font-bold underline decoration-[1.5px] underline-offset-4 italic">Vigilance</span> : {stats.alerte} alerte(s) détectée(s).</>
+                  {searchType === 'error' ? "Aucun secteur correspondant n'a pu être identifié dans la base de données." : `Réseau de distribution ${searchType === 'departement' ? 'départemental' : 'communal'}.`}
+                  <br />
+                  {searchType !== 'error' && (
+                    stats.alerte === 0 ? (
+                      <span className="text-[#0D9488] font-bold underline decoration-[1.5px] underline-offset-4 italic">Conformité validée</span>
+                    ) : (
+                      <><span className="text-[#E11D48] font-bold underline decoration-[1.5px] underline-offset-4 italic">Vigilance</span> : {stats.alerte} alerte(s) détectée(s).</>
+                    )
                   )}
                 </p>
               </div>
@@ -413,7 +439,7 @@ export default function App() {
             </div>
 
             <div className="space-y-0">
-              {filteredData.length === 0 && <div className="py-20 text-center text-[#64748B] italic font-serif text-xl">Aucune donnée trouvée.</div>}
+              {filteredData.length === 0 && <div className="py-20 text-center text-[#64748B] italic font-serif text-xl">Aucune donnée trouvée ou ville inexistante.</div>}
               {filteredData.slice(0, 50).map((item) => (
                 <div key={item.id} className="border-b border-[#E2E8F0]">
                   <div onClick={() => setExpandedRow(expandedRow === item.id ? null : item.id)} className="grid grid-cols-12 py-10 items-center cursor-pointer hover:bg-white transition-colors">

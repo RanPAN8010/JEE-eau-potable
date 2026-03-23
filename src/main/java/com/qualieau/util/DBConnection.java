@@ -5,38 +5,24 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DBConnection {
-<<<<<<< Updated upstream
-    private static final String DOCKER_URL = "jdbc:mysql://db-mysql:3306/qualieau_db?serverTimezone=UTC";
-    private static final String LOCAL_URL = "jdbc:mysql://localhost:3306/qualieau_db?serverTimezone=UTC";
-=======
-    // --- ON AJOUTE LES PARAMÈTRES MAGIQUES POUR L'UTF-8 ---
-    // On ajoute : &useUnicode=true&characterEncoding=UTF-8
+    // 1. URL pour les requêtes à l'intérieur de Docker (port 3306 classique + UTF-8)
     private static final String DOCKER_URL = "jdbc:mysql://db-mysql:3306/qualieau_db?serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8";
-    private static final String LOCAL_URL = "jdbc:mysql://localhost:3306/qualieau_db?serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8";
     
-    // Assure-toi que le USER et PASSWORD correspondent bien à ton docker-compose.yml
->>>>>>> Stashed changes
+    // 2. URL pour tes tests locaux sur ton PC (port 3307 du docker-compose + UTF-8)
+    private static final String LOCAL_URL = "jdbc:mysql://localhost:3307/qualieau_db?serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8";
+
     private static final String USER = "root"; 
     private static final String PASSWORD = "root"; 
 
     public static Connection getConnection() throws SQLException {
         try {
-<<<<<<< Updated upstream
             Class.forName("com.mysql.cj.jdbc.Driver");
 
             try {
+                // Tentative 1 : On est dans Docker ?
                 return DriverManager.getConnection(DOCKER_URL, USER, PASSWORD);
             } catch (SQLException e) {
-=======
-            // Chargement explicite du driver
-            Class.forName("com.mysql.cj.jdbc.Driver");
-
-            try {
-                // Tentative de connexion via le réseau Docker
-                return DriverManager.getConnection(DOCKER_URL, USER, PASSWORD);
-            } catch (SQLException e) {
-                // Si échec (ex: exécution locale), tentative via localhost
->>>>>>> Stashed changes
+                // Tentative 2 : On est sur le PC pour lancer les tests Maven ?
                 return DriverManager.getConnection(LOCAL_URL, USER, PASSWORD);
             }
             
